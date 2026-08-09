@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ring: 190 58 149; /* #BE3A95 — the logo's own primary */
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-surface-0 text-ink-900 font-sans text-base;
+  }
+  .dark body {
+    @apply bg-night-950 text-surface-0;
+  }
+  ::selection {
+    background: rgba(75, 14, 66, 0.12);
+    color: #141414;
+  }
+  /* Headings: medium weight at display sizes, never bold. Proportion,
+     not shout. Tracking arrives from the type scale, per optical size. */
+  h1, h2, h3, h4 {
+    @apply font-display;
+    font-weight: 500;
+    text-wrap: balance;
+    font-feature-settings: "cv05" 1, "ss03" 1;
+  }
+  h1 { font-weight: 480; }
+  p {
+    text-wrap: pretty;
+  }
+  /* Tabular figures wherever numbers sit in a column */
+  dd, time, .tnum { font-variant-numeric: tabular-nums; }
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  /* Material, not effect: ultra-thin translucency, generous saturation
+     so colour passing beneath stays alive, one hairline of borrowed
+     light along the top edge, and no visible border. */
+  .glass {
+    background: rgba(250, 249, 250, 0.62);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(20, 20, 20, 0.04);
+  }
+  .dark .glass {
+    background: rgba(22, 14, 25, 0.58);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+  .hairline {
+    box-shadow: inset 0 0 0 1px rgba(20, 20, 20, 0.08);
+  }
+  .dark .hairline {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  }
+  /* A rule that carries weight only where the eye rests */
+  .rule {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(20,20,20,0.10) 18%, rgba(20,20,20,0.10) 82%, transparent);
+  }
+  .dark .rule {
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.10) 18%, rgba(255,255,255,0.10) 82%, transparent);
+  }
+  .measure {
+    max-width: 62ch;
+  }
+  /* Section rhythm: whitespace as a design element, not padding */
+  .section {
+    padding-top: clamp(6rem, 13vw, 12rem);
+    padding-bottom: clamp(6rem, 13vw, 12rem);
+  }
+}
+
+/* Stillness first: honour reduced motion completely. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+}
+
+/* --- Premium microinteractions --- */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 4px rgb(190 55 149 / 0.12);
+  transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+details > *:not(summary) {
+  animation: accordion-open 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes accordion-open {
+  from { opacity: 0; transform: translateY(-4px); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details > *:not(summary) { animation: none; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { transition: none; }
+}
+
+/* --- Ambient texture & border-light --- */
+@property --glow-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* --- React Bits surfaces, adapted to HealerJi ---------------------- */
+/* SpotlightCard ships its own dark card styling; we take only the
+   spotlight behaviour and let our own tokens supply the surface. */
+.card-spotlight {
+  border-color: var(--ck-border, rgba(20, 20, 20, 0.10));
+  background-color: var(--ck-card, transparent);
+}
+
+/* SplitText and FoldText must never introduce their own typeface. */
+.split-parent,
+.fold-text,
+.depth-text {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+.fold-text { letter-spacing: -0.03em; }

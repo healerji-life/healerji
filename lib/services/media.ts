@@ -21,6 +21,7 @@ export const UPLOAD_FOLDERS = {
   healers: "healerji/healers",
   articles: "healerji/articles",
   practices: "healerji/practices",
+  team: "healerji/team",
 } as const;
 
 export type UploadFolder = (typeof UPLOAD_FOLDERS)[keyof typeof UPLOAD_FOLDERS];

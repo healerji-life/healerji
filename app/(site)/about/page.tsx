@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/reveal";
 import { Button } from "@/components/ui/button";
 import { founder, leadership, visionMission } from "@/lib/data/founder";
+import { listActiveTeam } from "@/lib/services/team";
 
 export const metadata: Metadata = {
   title: "Our story — founded by Poonam Khetan",
@@ -13,7 +14,30 @@ export const metadata: Metadata = {
     "HealerJi was founded by educator and certified healer Poonam Khetan to give India's certified healers and the people who need them one trusted home. Meet the founder and leadership.",
 };
 
-export default function AboutPage() {
+/**
+ * The leadership grid is CMS-managed (admin → Team). The hardcoded array in
+ * lib/data/founder.ts remains as the fallback for a deployment whose database
+ * has not had the team_members migration applied yet, so the section can never
+ * render empty. The migration seeds exactly these three people, which is why
+ * the two agree.
+ */
+async function teamForDisplay() {
+  const result = await listActiveTeam();
+  if (!result.ok || result.data.length === 0) {
+    return leadership.map((p) => ({
+      key: p.name, name: p.name, role: p.role,
+      photo: p.photo, bio: p.bio, linkedin: p.linkedin,
+    }));
+  }
+  return result.data.map((p) => ({
+    key: p.id, name: p.name, role: p.role,
+    photo: p.photo_url, bio: p.bio, linkedin: p.linkedin_url,
+  }));
+}
+
+export default async function AboutPage() {
+  const team = await teamForDisplay();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -167,22 +191,27 @@ export default function AboutPage() {
           </p>
         </Reveal>
         <ul className="mt-12 grid gap-10 md:grid-cols-3">
-          {leadership.map((person, i) => (
-            <Reveal as="li" key={person.name} delay={i * 0.06}>
+          {team.map((person, i) => (
+            <Reveal as="li" key={person.key} delay={i * 0.06}>
               <article>
-                <Image
-                  src={person.photo}
-                  alt={`Portrait of ${person.name}`}
-                  width={400}
-                  height={400}
-                  className="aspect-square w-full rounded-md object-cover"
-                  sizes="(min-width: 768px) 30vw, 90vw"
-                />
+                {person.photo ? (
+                  <Image
+                    src={person.photo}
+                    alt={`Portrait of ${person.name}`}
+                    width={400}
+                    height={400}
+                    className="aspect-square w-full rounded-md object-cover"
+                    sizes="(min-width: 768px) 30vw, 90vw"
+                  />
+                ) : (
+                  <div className="aspect-square w-full rounded-md bg-surface-50 dark:bg-night-900" />
+                )}
                 <h3 className="mt-5 font-display text-xl">{person.name}</h3>
                 <p className="text-sm text-mist-500">{person.role}</p>
                 <p className="mt-3 text-sm leading-relaxed text-ink-600 dark:text-mist-400">
                   {person.bio}
                 </p>
+                {person.linkedin ? (
                 <a
                   href={person.linkedin}
                   rel="noopener"
@@ -191,6 +220,7 @@ export default function AboutPage() {
                   LinkedIn
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                 </a>
+                ) : null}
               </article>
             </Reveal>
           ))}

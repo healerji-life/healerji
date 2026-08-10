@@ -368,6 +368,22 @@ export type AnalyticsEventRow = {
   is_bot: boolean;
 };
 
+export type TeamMemberRow = {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  photo_url: string | null;
+  photo_alt: string | null;
+  linkedin_url: string | null;
+  display_order: number;
+  status: RecordStatus;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+};
+
 export type PageEngagementRow = {
   route: string;
   views: number;
@@ -477,6 +493,7 @@ export interface Database {
         },
         "name" | "email" | "topic" | "message"
       >;
+      team_members: Table<TeamMemberRow, "name" | "role">;
       admin_audit_logs: Table<AuditLogRow, "action" | "resource_type">;
       app_settings: Table<
         { key: string; value: Json; label: string | null; description: string | null; category: string; updated_at: string; updated_by: string | null },

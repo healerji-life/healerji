@@ -25,6 +25,7 @@ export const NAV: NavItem[] = [
     children: [
       { href: "/admin/blog", label: "Blogs", permission: "content.blog.manage" },
       { href: "/admin/practices", label: "Guided Practices", permission: "content.practices.manage" },
+      { href: "/admin/team", label: "Team", permission: "content.pages.manage" },
     ],
   },
   { href: "/admin/users", label: "Users", permission: "users.view" },

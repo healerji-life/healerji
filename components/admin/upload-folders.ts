@@ -10,4 +10,5 @@ export const UPLOAD_FOLDERS_PUBLIC = {
   healers: "healerji/healers",
   articles: "healerji/articles",
   practices: "healerji/practices",
+  team: "healerji/team",
 } as const;

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPracticeById } from "@/lib/services/practices";
 import { recordAudit, AUDIT_ACTIONS } from "@/lib/services/audit";
 import { fromPostgrestError } from "@/lib/services/types";
+import type { PracticeRow } from "@/lib/supabase/types";
 import { slugify } from "@/lib/format";
 import { PRACTICE_CATEGORIES, practiceMinutesFromSteps } from "@/lib/content/practice";
 
@@ -234,8 +235,8 @@ export async function setPracticeStatusAction(formData: FormData): Promise<void>
   if (!auth.ok) redirect("/admin/practices?error=forbidden");
 
   const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "");
-  if (!(TRANSITIONS as readonly string[]).includes(status)) redirect("/admin/practices?error=bad_status");
+  const status = String(formData.get("status") ?? "") as (typeof TRANSITIONS)[number];
+  if (!TRANSITIONS.includes(status)) redirect("/admin/practices?error=bad_status");
 
   const before = await getPracticeById(id);
   if (!before.ok) redirect("/admin/practices?error=not_found");
@@ -243,7 +244,7 @@ export async function setPracticeStatusAction(formData: FormData): Promise<void>
   const supabase = await createClient();
   if (!supabase) redirect("/admin/practices?error=unconfigured");
 
-  const patch: Record<string, unknown> = { status, updated_by: auth.viewer.id };
+  const patch: Partial<PracticeRow> = { status, updated_by: auth.viewer.id };
   if (status === "published" && !before.data.published_at) {
     patch.published_at = new Date().toISOString();
   }

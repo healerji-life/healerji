@@ -267,7 +267,7 @@ export function SeedSoundPlayer({
             id={`seed-status-${uid}`}
           >
             {statusText}
-            {available && duration > 0 && state !== "unavailable" && (
+            {available && duration > 0 && (
               <span className="tabular-nums">
                 {" · "}
                 {formatTime(time)} / {formatTime(duration)}

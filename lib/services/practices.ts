@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import {
   err, fromPostgrestError, NOT_CONFIGURED, ok, range, safeSort, sanitiseSearch,
   type ListParams, type Paginated, type Result,
@@ -56,7 +56,7 @@ export async function getPublishedPractice(slug: string): Promise<Result<Practic
 }
 
 export async function listPublishedPracticeSlugs(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return [];
   const { data } = await supabase.from("published_practices").select("slug");
   return (data ?? []).map((row) => row.slug);

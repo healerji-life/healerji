@@ -7,7 +7,16 @@
  */
 export type Result<T> =
   | { ok: true; data: T }
-  | { ok: false; error: ServiceError };
+  | Failure;
+
+/**
+ * The failure arm on its own. The helpers below can only ever produce this, so
+ * they say so: a caller reading `.error` off one of them should not have to
+ * re-narrow a union that has no reachable success branch. Failure remains
+ * assignable to Result<T> for every T, so returning one from a service is
+ * unchanged.
+ */
+export type Failure = { ok: false; error: ServiceError };
 
 export interface ServiceError {
   code: ServiceErrorCode;
@@ -30,12 +39,12 @@ export type ServiceErrorCode =
 
 export const ok = <T>(data: T): Result<T> => ({ ok: true, data });
 
-export const err = (code: ServiceErrorCode, message: string, detail?: string): Result<never> => ({
+export const err = (code: ServiceErrorCode, message: string, detail?: string): Failure => ({
   ok: false,
   error: detail === undefined ? { code, message } : { code, message, detail },
 });
 
-export const NOT_CONFIGURED = (what: string): Result<never> =>
+export const NOT_CONFIGURED = (what: string): Failure =>
   err("not_configured", `${what} is not configured on this deployment yet.`);
 
 /**
@@ -45,7 +54,7 @@ export const NOT_CONFIGURED = (what: string): Result<never> =>
 export function fromPostgrestError(
   error: { code?: string | null; message?: string | null } | null,
   fallback = "Something went wrong. Please try again."
-): Result<never> {
+): Failure {
   const code = error?.code ?? "";
   const message = error?.message ?? "";
 

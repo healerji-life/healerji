@@ -40,7 +40,7 @@ type Table<Row, Required extends keyof Row = never> = {
   Relationships: [];
 };
 
-export interface ProfileRow {
+export type ProfileRow = {
   id: string;
   email: string;
   full_name: string | null;
@@ -56,16 +56,16 @@ export interface ProfileRow {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
-}
+};
 
-export interface UserRoleRow {
+export type UserRoleRow = {
   user_id: string;
   role: AppRole;
   granted_by: string | null;
   granted_at: string;
-}
+};
 
-export interface HealerRow {
+export type HealerRow = {
   id: string;
   user_id: string | null;
   slug: string;
@@ -97,10 +97,10 @@ export interface HealerRow {
   archived_at: string | null;
   created_by: string | null;
   updated_by: string | null;
-}
+};
 
 /** Shape returned by the public.healer_cards view — what the website renders. */
-export interface HealerCardRow {
+export type HealerCardRow = {
   id: string;
   slug: string;
   name: string;
@@ -126,9 +126,9 @@ export interface HealerCardRow {
   modalities: string[];
   languages: string[];
   session_types: SessionKind[];
-}
+};
 
-export interface SessionOfferingRow {
+export type SessionOfferingRow = {
   id: string;
   healer_id: string;
   kind: SessionKind;
@@ -137,9 +137,9 @@ export interface SessionOfferingRow {
   active: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface AvailabilityRuleRow {
+export type AvailabilityRuleRow = {
   id: string;
   healer_id: string;
   weekday: number;
@@ -149,9 +149,9 @@ export interface AvailabilityRuleRow {
   effective_to: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface AvailabilityExceptionRow {
+export type AvailabilityExceptionRow = {
   id: string;
   healer_id: string;
   kind: AvailabilityExceptionKind;
@@ -160,9 +160,9 @@ export interface AvailabilityExceptionRow {
   end_time: string | null;
   reason: string | null;
   created_at: string;
-}
+};
 
-export interface HealerBreakRow {
+export type HealerBreakRow = {
   id: string;
   healer_id: string;
   label: string | null;
@@ -170,9 +170,9 @@ export interface HealerBreakRow {
   start_time: string;
   end_time: string;
   created_at: string;
-}
+};
 
-export interface BookingSettingsRow {
+export type BookingSettingsRow = {
   healer_id: string;
   timezone: string;
   slot_interval_minutes: number;
@@ -183,9 +183,9 @@ export interface BookingSettingsRow {
   accepting_bookings: boolean;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface BookingRow {
+export type BookingRow = {
   id: string;
   reference: string;
   customer_id: string | null;
@@ -215,9 +215,9 @@ export interface BookingRow {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface PaymentRow {
+export type PaymentRow = {
   id: string;
   booking_id: string | null;
   provider: string;
@@ -239,9 +239,9 @@ export interface PaymentRow {
   notes: Json;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface RefundRow {
+export type RefundRow = {
   id: string;
   payment_id: string;
   razorpay_refund_id: string | null;
@@ -252,9 +252,9 @@ export interface RefundRow {
   initiated_by: string | null;
   created_at: string;
   processed_at: string | null;
-}
+};
 
-export interface WebhookEventRow {
+export type WebhookEventRow = {
   id: string;
   provider: string;
   event_id: string;
@@ -264,9 +264,9 @@ export interface WebhookEventRow {
   received_at: string;
   processed_at: string | null;
   processing_error: string | null;
-}
+};
 
-export interface ArticleRow {
+export type ArticleRow = {
   id: string;
   slug: string;
   title: string;
@@ -293,9 +293,9 @@ export interface ArticleRow {
   archived_at: string | null;
   created_by: string | null;
   updated_by: string | null;
-}
+};
 
-export interface PracticeRow {
+export type PracticeRow = {
   id: string;
   slug: string;
   title: string;
@@ -317,9 +317,9 @@ export interface PracticeRow {
   /** Added in migration 0014. */
   category: string | null;
   after_note: string;
-}
+};
 
-export interface AuditLogRow {
+export type AuditLogRow = {
   id: number;
   actor_id: string | null;
   actor_email: string | null;
@@ -332,9 +332,9 @@ export interface AuditLogRow {
   after_data: Json | null;
   user_agent: string | null;
   created_at: string;
-}
+};
 
-export interface PageViewRow {
+export type PageViewRow = {
   id: number;
   session_id: string | null;
   visitor_id: string;
@@ -350,9 +350,9 @@ export interface PageViewRow {
   device_type: DeviceType | null;
   country: string | null;
   is_bot: boolean;
-}
+};
 
-export interface AnalyticsEventRow {
+export type AnalyticsEventRow = {
   id: number;
   session_id: string | null;
   visitor_id: string;
@@ -366,9 +366,9 @@ export interface AnalyticsEventRow {
   booking_id: string | null;
   occurred_at: string;
   is_bot: boolean;
-}
+};
 
-export interface PageEngagementRow {
+export type PageEngagementRow = {
   route: string;
   views: number;
   visitors: number;
@@ -380,7 +380,7 @@ export interface PageEngagementRow {
   bookings_attributed: number;
   revenue_paise: number;
   conversion_rate: number;
-}
+};
 
 export interface Database {
   public: {

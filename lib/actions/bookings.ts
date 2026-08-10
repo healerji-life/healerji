@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cancelBooking, getBookingDetail } from "@/lib/services/bookings";
 import { recordAudit, AUDIT_ACTIONS } from "@/lib/services/audit";
 import { fromPostgrestError } from "@/lib/services/types";
+import type { BookingRow } from "@/lib/supabase/types";
 import { notifyBookingCancelled } from "@/lib/services/notifications";
 
 export interface BookingActionState {
@@ -78,10 +79,10 @@ export async function updateBookingStatusAction(
   if (!auth.ok) return { error: auth.error };
 
   const id = String(formData.get("bookingId") ?? "");
-  const status = String(formData.get("status") ?? "");
+  const status = String(formData.get("status") ?? "") as (typeof ADMIN_STATUSES)[number];
   const note = String(formData.get("note") ?? "").slice(0, 500);
 
-  if (!(ADMIN_STATUSES as readonly string[]).includes(status)) {
+  if (!ADMIN_STATUSES.includes(status)) {
     return { error: "That status isn't allowed." };
   }
 
@@ -91,7 +92,7 @@ export async function updateBookingStatusAction(
   const supabase = await createClient();
   if (!supabase) return { error: "Not configured." };
 
-  const patch: Record<string, unknown> = { status };
+  const patch: Partial<BookingRow> = { status };
   if (status === "cancelled") {
     patch.cancelled_at = new Date().toISOString();
     patch.cancelled_by = auth.viewer.id;
@@ -101,7 +102,7 @@ export async function updateBookingStatusAction(
   if (note) patch.healer_note = note;
 
   const { error } = await supabase.from("bookings").update(patch).eq("id", id);
-  if (error) return fromPostgrestError(error, "We couldn't update that booking.");
+  if (error) return { error: fromPostgrestError(error, "We couldn't update that booking.").error.message };
 
   await recordAudit({
     viewer: auth.viewer,

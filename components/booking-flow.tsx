@@ -14,6 +14,7 @@ import {
   PART_LABEL,
   DAY_PARTS,
   type DayAvailability,
+  type DayPart,
   type Duration,
   type Slot,
 } from "@/lib/booking/window";

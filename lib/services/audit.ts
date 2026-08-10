@@ -74,7 +74,6 @@ export const AUDIT_ACTIONS = {
 
 // ------------------------------------------------------------- reading ------
 
-import { createClient } from "@/lib/supabase/server";
 import {
   fromPostgrestError, NOT_CONFIGURED, ok, range, sanitiseSearch,
   type ListParams, type Paginated, type Result,

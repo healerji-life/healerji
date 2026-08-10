@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   err, fromPostgrestError, NOT_CONFIGURED, ok, range, safeSort, sanitiseSearch,
@@ -271,7 +271,7 @@ export async function getPublicHealerForSite(slug: string): Promise<Result<Heale
 
 /** Slugs for generateStaticParams / sitemap. */
 export async function listActiveHealerSlugs(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return [];
   const { data } = await supabase.from("healers").select("slug").eq("status", "active");
   return (data ?? []).map((row) => row.slug);

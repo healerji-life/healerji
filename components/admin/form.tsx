@@ -28,7 +28,7 @@ export function Fieldset({
 }
 
 export function Field({
-  label, name, type = "text", defaultValue, hint, error, required, placeholder, min, max, step, span,
+  label, name, type = "text", defaultValue, hint, error, required, placeholder, min, max, step, span, maxLength,
 }: {
   label: string;
   name: string;
@@ -42,6 +42,7 @@ export function Field({
   max?: number;
   step?: string;
   span?: boolean;
+  maxLength?: number;
 }) {
   return (
     <label className={cn("block", span && "sm:col-span-2")}>
@@ -58,6 +59,7 @@ export function Field({
         min={min}
         max={max}
         step={step}
+        maxLength={maxLength}
         aria-invalid={Boolean(error)}
         className={cn(
           "h-11 w-full rounded-sm bg-surface-50 px-3.5 text-sm outline-none ring-orchid-500 focus-visible:ring-2 dark:bg-night-950",

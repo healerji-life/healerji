@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getArticleById } from "@/lib/services/articles";
 import { recordAudit, AUDIT_ACTIONS } from "@/lib/services/audit";
 import { fromPostgrestError } from "@/lib/services/types";
+import type { ArticleRow } from "@/lib/supabase/types";
 import { slugify } from "@/lib/format";
 
 /**
@@ -254,8 +255,8 @@ export async function setArticleStatusAction(formData: FormData): Promise<void> 
   if (!auth.ok) redirect("/admin/blog?error=forbidden");
 
   const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "");
-  if (!(TRANSITIONS as readonly string[]).includes(status)) redirect("/admin/blog?error=bad_status");
+  const status = String(formData.get("status") ?? "") as (typeof TRANSITIONS)[number];
+  if (!TRANSITIONS.includes(status)) redirect("/admin/blog?error=bad_status");
 
   const before = await getArticleById(id);
   if (!before.ok) redirect("/admin/blog?error=not_found");
@@ -263,7 +264,7 @@ export async function setArticleStatusAction(formData: FormData): Promise<void> 
   const supabase = await createClient();
   if (!supabase) redirect("/admin/blog?error=unconfigured");
 
-  const patch: Record<string, unknown> = { status, updated_by: auth.viewer.id };
+  const patch: Partial<ArticleRow> = { status, updated_by: auth.viewer.id };
   // Publishing something that has never had a date gets one now.
   if (status === "published" && !before.data.published_at) {
     patch.published_at = new Date().toISOString();

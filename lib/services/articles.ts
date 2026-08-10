@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import {
   err, fromPostgrestError, NOT_CONFIGURED, ok, range, safeSort, sanitiseSearch,
   type ListParams, type Paginated, type Result,
@@ -58,7 +58,7 @@ export async function getPublishedArticle(slug: string): Promise<Result<ArticleR
 
 /** Slugs for generateStaticParams and the sitemap. */
 export async function listPublishedArticleSlugs(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return [];
   const { data } = await supabase.from("published_articles").select("slug");
   return (data ?? []).map((row) => row.slug);

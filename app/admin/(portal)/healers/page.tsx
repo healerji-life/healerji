@@ -91,7 +91,7 @@ export default async function AdminHealersPage({
         description="Everything here is what the public site renders. Saving a change updates the website immediately — no deployment."
         actions={
           <div className="flex items-center gap-2">
-            <ExportButtons />
+            <ExportButtons dataset="healers" query={qs.toString()} />
             <Link
               href="/admin/healers/import"
               className="inline-flex h-10 items-center rounded-full px-5 text-sm font-medium hairline transition-colors hover:bg-ink-900/[0.035]"

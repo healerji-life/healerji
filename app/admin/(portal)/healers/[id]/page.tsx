@@ -6,6 +6,7 @@ import { getHealerById } from "@/lib/services/healers";
 import { listModalities, listLanguages, getHealerRelations } from "@/lib/services/reference";
 import { isConfigured } from "@/lib/services/integrations";
 import { updateHealerAction, archiveHealerAction, restoreHealerAction } from "@/lib/actions/healers";
+import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import { PageHeader, Panel, Badge } from "@/components/admin/ui";
 import { HealerForm } from "@/components/admin/healer-form";
 import { InviteHealerPanel } from "@/components/admin/invite-healer";
@@ -59,12 +60,16 @@ export default async function EditHealerPage({
             ) : null}
             <form action={isArchived ? restoreHealerAction : archiveHealerAction}>
               <input type="hidden" name="id" value={h.id} />
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center rounded-full px-5 text-sm font-medium hairline"
-              >
-                {isArchived ? "Restore" : "Archive"}
-              </button>
+              <ConfirmSubmit
+                label={isArchived ? "Restore" : "Archive"}
+                pendingLabel={isArchived ? "Restoring…" : "Archiving…"}
+                confirm={
+                  isArchived
+                    ? `Restore ${h.name}? They come back as inactive, not public.`
+                    : `Archive ${h.name}? They are removed from the public site. Bookings and history are kept, and you can restore them.`
+                }
+                destructive={!isArchived}
+              />
             </form>
           </>
         }

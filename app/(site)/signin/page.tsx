@@ -5,6 +5,7 @@ import { BreathingMark } from "@/components/breathing-mark";
 import { AuthForm } from "@/components/auth/auth-form";
 import { signIn, signUp, requestPasswordReset, signInWithGoogle } from "@/lib/auth/actions";
 import { getViewer } from "@/lib/auth/session";
+import { isStaff } from "@/lib/auth/roles";
 import { isConfigured } from "@/lib/services/integrations";
 
 export const metadata = { title: "Sign in · HealerJi" };
@@ -22,8 +23,22 @@ export default async function SignInPage({
   searchParams: Promise<{ mode?: string; next?: string; reason?: string }>;
 }) {
   const params = await searchParams;
+  // Already signed in? Send them where they were going, or to the portal their
+  // roles entitle them to. Redirecting everyone to "/" made the navbar's Sign
+  // in button look broken: it bounced you straight back to the page you were
+  // already on, with no sign anything had happened.
   const viewer = await getViewer();
-  if (viewer) redirect(params.next && params.next.startsWith("/") ? params.next : "/");
+  if (viewer) {
+    const requested = params.next ?? "";
+    if (requested.startsWith("/") && !requested.startsWith("//")) redirect(requested);
+    redirect(
+      isStaff(viewer.roles)
+        ? "/admin/dashboard"
+        : viewer.roles.includes("healer")
+          ? "/healer/dashboard"
+          : "/bookings"
+    );
+  }
 
   const mode = params.mode === "join" ? "join" : params.mode === "reset" ? "reset" : "signin";
   const googleReady = isConfigured("google_oauth");

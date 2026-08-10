@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isRole, type Permission, type Role, can, isAdmin, isStaff } from "@/lib/auth/roles";
+import { isRole, sortRoles, type Permission, type Role, can, isAdmin, isStaff } from "@/lib/auth/roles";
 
 /**
  * Server-side session and authorisation.
@@ -38,9 +38,11 @@ export async function getViewer(): Promise<Viewer | null> {
     supabase.from("healers").select("id, slug").eq("user_id", auth.user.id).maybeSingle(),
   ]);
 
-  const roles = (roleRows ?? [])
-    .map((r) => r.role)
-    .filter((r): r is Role => isRole(r));
+  // Ordered most privileged first, so roles[0] and any display of the set are
+  // meaningful rather than dependent on the order Postgres happened to return.
+  const roles = sortRoles(
+    (roleRows ?? []).map((r) => r.role).filter((r): r is Role => isRole(r))
+  );
 
   return {
     id: auth.user.id,

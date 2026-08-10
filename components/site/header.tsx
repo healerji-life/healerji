@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, Globe, Menu, Moon, Search, Sun, X } from "lucide-react";
+import { ChevronDown, Menu, Moon, Search, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NavLogo } from "@/components/site/nav-logo";
 import { concerns } from "@/lib/config/taxonomy";
@@ -90,9 +90,6 @@ export function Header() {
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <Button variant="secondary" size="icon" className="hidden xl:inline-flex" aria-label="Search HealerJi">
             <Search className="h-[18px] w-[18px]" aria-hidden />
-          </Button>
-          <Button variant="secondary" size="icon" className="hidden xl:inline-flex" aria-label="Switch language">
-            <Globe className="h-[18px] w-[18px]" aria-hidden />
           </Button>
           <Button
             variant="secondary"

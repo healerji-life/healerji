@@ -143,11 +143,14 @@ async function saveBookingToggle(healerId: string, timezone: string, accepting: 
 }
 
 /** Public surfaces that must reflect an edit immediately, with no redeploy. */
-function revalidatePublic(slug?: string) {
+function revalidatePublic(slug?: string, healerId?: string) {
   revalidatePath("/healers");
   revalidatePath("/");
   if (slug) revalidatePath(`/healers/${slug}`);
   revalidatePath("/admin/healers");
+  // The detail screen shows the status and decides whether the button says
+  // Archive or Restore, so it has to be invalidated alongside the list.
+  if (healerId) revalidatePath(`/admin/healers/${healerId}`);
 }
 
 export async function createHealerAction(
@@ -209,7 +212,7 @@ export async function createHealerAction(
     after: { slug: healer.slug, status: healer.status, price_paise: healer.price_paise },
   });
 
-  revalidatePublic(healer.slug);
+  revalidatePublic(healer.slug, healer.id);
 
   if (offeringError) {
     // The healer exists; be precise about what did not happen rather than
@@ -287,8 +290,8 @@ export async function updateHealerAction(
 
   // The old slug's page is revalidated too, or a renamed healer leaves a stale
   // page behind at the previous URL.
-  revalidatePublic(before.data.slug);
-  revalidatePublic(updated.data.slug);
+  revalidatePublic(before.data.slug, id);
+  revalidatePublic(updated.data.slug, id);
   revalidatePath(`/admin/healers/${id}`);
 
   return offeringError
@@ -315,7 +318,7 @@ export async function archiveHealerAction(formData: FormData): Promise<void> {
     after: { status: "archived" },
   });
 
-  revalidatePublic(result.data.slug);
+  revalidatePublic(result.data.slug, id);
   redirect("/admin/healers?archived=1");
 }
 
@@ -336,7 +339,7 @@ export async function restoreHealerAction(formData: FormData): Promise<void> {
     after: { status: "inactive" },
   });
 
-  revalidatePublic(result.data.slug);
+  revalidatePublic(result.data.slug, id);
   redirect(`/admin/healers/${id}?restored=1`);
 }
 

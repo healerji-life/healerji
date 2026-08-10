@@ -2,6 +2,7 @@ import "server-only";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import type { Viewer } from "@/lib/auth/session";
+import { primaryRole } from "@/lib/auth/roles";
 
 /**
  * Audit log writer.
@@ -32,7 +33,7 @@ export async function recordAudit(params: {
     const { error } = await supabase.from("admin_audit_logs").insert({
       actor_id: params.viewer.id,
       actor_email: params.viewer.email,
-      actor_role: params.viewer.roles[0] ?? null,
+      actor_role: primaryRole(params.viewer.roles),
       action: params.action,
       resource_type: params.resourceType,
       resource_id: params.resourceId ?? null,

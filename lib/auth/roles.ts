@@ -13,6 +13,23 @@
 export const ROLES = ["super_admin", "admin", "editor", "healer", "customer"] as const;
 export type Role = (typeof ROLES)[number];
 
+/**
+ * The most privileged role a person holds.
+ *
+ * user_roles is a set, not a ranking, and nothing orders it — an invited admin
+ * who also carries the automatic customer grant could surface as "Customer" in
+ * the shell and in the audit log purely because of row order. ROLES is ordered
+ * most privileged first, so the first match is the meaningful one.
+ */
+export function primaryRole(roles: Role[]): Role | null {
+  return ROLES.find((r) => roles.includes(r)) ?? null;
+}
+
+/** Same ordering, for displaying a person's full set of roles. */
+export function sortRoles(roles: Role[]): Role[] {
+  return ROLES.filter((r) => roles.includes(r));
+}
+
 export const ROLE_LABEL: Record<Role, string> = {
   super_admin: "Super admin",
   admin: "Admin",

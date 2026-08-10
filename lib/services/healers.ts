@@ -35,7 +35,7 @@ export interface HealerFilters extends ListParams {
 export async function listPublicHealers(
   filters: HealerFilters = {}
 ): Promise<Result<HealerCardRow[]>> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   let query = supabase
@@ -57,7 +57,7 @@ export async function listPublicHealers(
 }
 
 export async function getPublicHealer(slug: string): Promise<Result<HealerCardRow>> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   const { data, error } = await supabase
@@ -237,7 +237,7 @@ export async function listPublicHealersForSite(
   if (!cards.ok) return cards;
   if (cards.data.length === 0) return ok([]);
 
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return ok(cards.data.map((row) => toHealer(row, null)));
 
   const { data, error } = await supabase.rpc("healers_next_available", {
@@ -258,7 +258,7 @@ export async function getPublicHealerForSite(slug: string): Promise<Result<Heale
   const card = await getPublicHealer(slug);
   if (!card.ok) return card;
 
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return ok(toHealer(card.data, null));
 
   const { data, error } = await supabase.rpc("healer_next_available", {

@@ -44,7 +44,7 @@ export async function listPublishedPractices(
 }
 
 export async function getPublishedPractice(slug: string): Promise<Result<PracticeRow>> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   const { data, error } = await supabase

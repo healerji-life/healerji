@@ -45,7 +45,7 @@ export async function listPublishedArticles(
 }
 
 export async function getPublishedArticle(slug: string): Promise<Result<ArticleRow>> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   const { data, error } = await supabase

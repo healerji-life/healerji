@@ -7,6 +7,14 @@ import { PracticePlayer } from "@/components/practice-player";
 import { getPublishedPractice, listPublishedPracticeSlugs } from "@/lib/services/practices";
 import { toPractice } from "@/lib/services/practice-adapter";
 
+/**
+ * Matches /library/[slug] and /healers/[slug]: params come from the database at
+ * build time, dynamicParams stays on so a practice published afterwards renders
+ * on demand, and the window bounds how stale a page can be when a change lands
+ * outside a server action's revalidatePath.
+ */
+export const revalidate = 300;
+
 export async function generateStaticParams() {
   const slugs = await listPublishedPracticeSlugs();
   return slugs.map((slug) => ({ slug }));

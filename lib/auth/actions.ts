@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { absoluteUrl } from "@/lib/site-url";
 
 /**
  * Authentication server actions.
@@ -73,13 +74,12 @@ export async function signUp(
     return { error: parsed.error.issues[0]?.message ?? "Please check your details." };
   }
 
-  const origin = String(formData.get("origin") ?? "");
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: await absoluteUrl("/auth/callback"),
     },
   });
 
@@ -104,9 +104,8 @@ export async function requestPasswordReset(
   const parsed = z.string().email().safeParse(email);
   if (!parsed.success) return { error: "That email doesn't look right." };
 
-  const origin = String(formData.get("origin") ?? "");
   await supabase.auth.resetPasswordForEmail(parsed.data, {
-    redirectTo: `${origin}/auth/callback?next=/account/password`,
+    redirectTo: await absoluteUrl("/auth/callback?next=/account/password"),
   });
 
   // Always the same answer, whether or not the account exists.
@@ -142,13 +141,14 @@ export async function signInWithGoogle(formData: FormData): Promise<void> {
   const supabase = await createClient();
   if (!supabase) redirect("/signin?reason=unconfigured");
 
-  const origin = String(formData.get("origin") ?? "");
   const next = String(formData.get("next") ?? "/");
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(isSafeRedirect(next) ? next : "/")}`,
+      redirectTo: await absoluteUrl(
+        `/auth/callback?next=${encodeURIComponent(isSafeRedirect(next) ? next : "/")}`
+      ),
       // Only what is needed to create an account. No Drive, no contacts,
       // no calendar — requirement 18.
       scopes: "openid email profile",

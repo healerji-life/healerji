@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import { requirePermission } from "@/lib/auth/session";
 import { can } from "@/lib/auth/roles";
 import { getHealerById } from "@/lib/services/healers";
@@ -36,10 +35,6 @@ export default async function EditHealerPage({
     getHealerRelations(id),
   ]);
 
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : "";
 
   const h = healer.data;
   const isArchived = h.status === "archived";
@@ -126,7 +121,7 @@ export default async function EditHealerPage({
                   </p>
                 </>
               ) : can(viewer.roles, "healers.invite") ? (
-                <InviteHealerPanel healerId={h.id} origin={origin} />
+                <InviteHealerPanel healerId={h.id} />
               ) : (
                 <p className="text-sm text-mist-500">
                   No portal account. Inviting healers requires the admin role.

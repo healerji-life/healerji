@@ -41,14 +41,12 @@ export function PortalLogin({
   subtitle,
   next,
   reason,
-  origin,
-}: {
+  }: {
   action: Action;
   title: string;
   subtitle: string;
   next: string;
   reason?: string;
-  origin: string;
 }) {
   const [state, formAction] = useActionState<AuthFormState, FormData>(action, {});
   const reasonMessage = reason ? REASONS[reason] : undefined;
@@ -71,7 +69,6 @@ export function PortalLogin({
 
       <form action={formAction} noValidate className="mt-8">
         <input type="hidden" name="next" value={next} />
-        <input type="hidden" name="origin" value={origin} />
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Email</span>

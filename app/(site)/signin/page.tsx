@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { BreathingMark } from "@/components/breathing-mark";
 import { AuthForm } from "@/components/auth/auth-form";
-import { headers } from "next/headers";
 import { signIn, signUp, requestPasswordReset, signInWithGoogle } from "@/lib/auth/actions";
 import { getViewer } from "@/lib/auth/session";
 import { isConfigured } from "@/lib/services/integrations";
@@ -25,14 +24,6 @@ export default async function SignInPage({
   const params = await searchParams;
   const viewer = await getViewer();
   if (viewer) redirect(params.next && params.next.startsWith("/") ? params.next : "/");
-
-  // The origin is needed for email-confirmation and OAuth redirect URLs and
-  // must come from the request, not from the browser: a client-supplied origin
-  // would be an open-redirect vector in the confirmation email.
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : "";
 
   const mode = params.mode === "join" ? "join" : params.mode === "reset" ? "reset" : "signin";
   const googleReady = isConfigured("google_oauth");
@@ -65,7 +56,6 @@ export default async function SignInPage({
                   action={signIn}
                   submitLabel="Sign in"
                   pendingLabel="Signing you in…"
-                  origin={origin}
                   {...(params.next ? { next: params.next } : {})}
                 />
               </div>
@@ -78,7 +68,7 @@ export default async function SignInPage({
                 </Link>
               </div>
               {googleReady ? (
-                <GoogleButton next={params.next ?? "/"} origin={origin} />
+                <GoogleButton next={params.next ?? "/"} />
               ) : null}
             </>
           ) : null}
@@ -94,7 +84,6 @@ export default async function SignInPage({
                   action={signUp}
                   submitLabel="Create account"
                   pendingLabel="Creating your account…"
-                  origin={origin}
                   includeName
                   autoComplete="new-password"
                 />
@@ -118,7 +107,6 @@ export default async function SignInPage({
                   action={requestPasswordReset}
                   submitLabel="Send reset link"
                   pendingLabel="Sending…"
-                  origin={origin}
                   includePassword={false}
                 />
               </div>
@@ -135,11 +123,10 @@ export default async function SignInPage({
   );
 }
 
-function GoogleButton({ next, origin }: { next: string; origin: string }) {
+function GoogleButton({ next }: { next: string }) {
   return (
     <form action={signInWithGoogle} className="mt-6">
       <input type="hidden" name="next" value={next} />
-      <input type="hidden" name="origin" value={origin} />
       <button
         type="submit"
         className="inline-flex h-12 w-full items-center justify-center rounded-full text-[0.9375rem] font-medium hairline hover:bg-ink-900/[0.035] dark:hover:bg-surface-0/[0.06]"

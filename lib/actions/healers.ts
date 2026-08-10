@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { authorise } from "@/lib/auth/session";
+import { absoluteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import {
   createHealer, updateHealer, archiveHealer, restoreHealer,
@@ -348,12 +349,15 @@ export async function inviteHealerAction(
 
   const id = String(formData.get("id") ?? "");
   const email = String(formData.get("email") ?? "").trim();
-  const origin = String(formData.get("origin") ?? "");
 
   const parsedEmail = z.string().email().safeParse(email);
   if (!parsedEmail.success) return { error: "That email doesn't look right." };
 
-  const result = await inviteHealer(id, parsedEmail.data, `${origin}/auth/callback?next=/healer/dashboard`);
+  const result = await inviteHealer(
+    id,
+    parsedEmail.data,
+    await absoluteUrl("/auth/callback?next=/healer/dashboard")
+  );
   if (!result.ok) {
     return {
       error: result.error.code === "not_configured"

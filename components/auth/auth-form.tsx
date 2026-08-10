@@ -58,7 +58,6 @@ export function AuthForm({
   action,
   submitLabel,
   pendingLabel,
-  origin,
   includeName = false,
   includePassword = true,
   next,
@@ -67,7 +66,6 @@ export function AuthForm({
   action: Action;
   submitLabel: string;
   pendingLabel: string;
-  origin: string;
   includeName?: boolean;
   includePassword?: boolean;
   next?: string;
@@ -77,7 +75,6 @@ export function AuthForm({
 
   return (
     <form action={formAction} noValidate>
-      <input type="hidden" name="origin" value={origin} />
       {next ? <input type="hidden" name="next" value={next} /> : null}
 
       {includeName ? (

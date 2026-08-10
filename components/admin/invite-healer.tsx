@@ -11,13 +11,12 @@ import { SubmitButton, FormMessage } from "@/components/admin/form";
  * their own credential from the emailed link, so no administrator ever knows
  * or transports it.
  */
-export function InviteHealerPanel({ healerId, origin }: { healerId: string; origin: string }) {
+export function InviteHealerPanel({ healerId }: { healerId: string }) {
   const [state, formAction] = useActionState<HealerFormState, FormData>(inviteHealerAction, {});
 
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="id" value={healerId} />
-      <input type="hidden" name="origin" value={origin} />
 
       <p className="text-sm text-ink-600 dark:text-mist-400">
         Invite this healer to the portal so they can set their own availability.

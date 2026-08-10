@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { requirePermission } from "@/lib/auth/session";
 import { can, ROLE_LABEL, type Role } from "@/lib/auth/roles";
 import { listUsers, getRoleCounts, type UserFilters } from "@/lib/services/users";
@@ -47,10 +46,6 @@ export default async function AdminUsersPage({
 
   const [result, counts] = await Promise.all([listUsers(filters), getRoleCounts()]);
 
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : "";
 
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v && k !== "page") qs.set(k, v);
@@ -86,7 +81,7 @@ export default async function AdminUsersPage({
       {canManage ? (
         <div className="mt-6">
           <Panel title="Invite a colleague" description="Admins and editors only. Healers are invited from the Healers screen.">
-            <InviteUserForm origin={origin} />
+            <InviteUserForm />
           </Panel>
         </div>
       ) : (

@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { PortalLogin } from "@/components/auth/portal-login";
 import { signIn } from "@/lib/auth/actions";
@@ -20,9 +19,6 @@ export default async function AdminLoginPage({
     redirect(params.next?.startsWith("/admin") ? params.next : "/admin/dashboard");
   }
 
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
 
   return (
     <main id="main" className="flex min-h-svh items-center bg-surface-0 px-6 dark:bg-night-950">
@@ -32,7 +28,6 @@ export default async function AdminLoginPage({
         subtitle="Sign in to manage healers, bookings, content and analytics."
         next={params.next?.startsWith("/admin") ? params.next : "/admin/dashboard"}
         {...(params.reason ? { reason: params.reason } : {})}
-        origin={host ? `${proto}://${host}` : ""}
       />
     </main>
   );

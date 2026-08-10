@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireHealerActor } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { absoluteUrl } from "@/lib/site-url";
 import { setHealerLanguages, setHealerModalities } from "@/lib/services/healers";
 import { fromPostgrestError } from "@/lib/services/types";
 
@@ -160,9 +161,8 @@ export async function requestHealerPasswordResetAction(
   const supabase = await createClient();
   if (!supabase) return { error: "This deployment isn't configured yet." };
 
-  const origin = String(formData.get("origin") ?? "");
   const { error } = await supabase.auth.resetPasswordForEmail(actor.viewer.email, {
-    redirectTo: `${origin}/auth/callback?next=/healer/settings`,
+    redirectTo: await absoluteUrl("/auth/callback?next=/healer/settings"),
   });
 
   if (error) return { error: "Couldn't send that email just now. Please try again." };

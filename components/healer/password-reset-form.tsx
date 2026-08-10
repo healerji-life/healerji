@@ -13,7 +13,7 @@ import { SubmitButton, FormMessage } from "@/components/admin/form";
  * this through Supabase means a hijacked portal session cannot change the
  * credential, because the link goes to the healer's mailbox.
  */
-export function PasswordResetForm({ origin }: { origin: string }) {
+export function PasswordResetForm() {
   const [state, formAction] = useActionState<HealerSelfState, FormData>(
     requestHealerPasswordResetAction,
     {}
@@ -21,7 +21,6 @@ export function PasswordResetForm({ origin }: { origin: string }) {
 
   return (
     <form action={formAction} className="space-y-3">
-      <input type="hidden" name="origin" value={origin} />
       {state.error || state.notice ? (
         <FormMessage {...(state.error ? { error: state.error } : { notice: state.notice })} />
       ) : null}

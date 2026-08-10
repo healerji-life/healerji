@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import Link from "next/link";
 import { requireHealer } from "@/lib/auth/session";
 import { getBookingSettings } from "@/lib/services/availability";
@@ -32,10 +31,6 @@ export default async function HealerSettingsPage() {
       : Promise.resolve({ data: null, error: null }),
   ]);
 
-  const headerList = await headers();
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "";
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : "";
 
   const p = profile.data;
 
@@ -112,7 +107,7 @@ export default async function HealerSettingsPage() {
           HealerJi never stores your password and no administrator can see it.
         </p>
         <div className="mt-4">
-          <PasswordResetForm origin={origin} />
+          <PasswordResetForm />
         </div>
       </section>
 

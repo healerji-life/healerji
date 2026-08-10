@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { authorise } from "@/lib/auth/session";
+import { absoluteUrl } from "@/lib/site-url";
 import { grantRole, revokeRole, setUserStatus, inviteUser, getRoleCounts } from "@/lib/services/users";
 import { recordAudit, AUDIT_ACTIONS } from "@/lib/services/audit";
 import { isRole, type Role } from "@/lib/auth/roles";
@@ -130,7 +131,6 @@ export async function inviteUserAction(
 
   const email = String(formData.get("email") ?? "").trim();
   const role = String(formData.get("role") ?? "editor");
-  const origin = String(formData.get("origin") ?? "");
 
   if (!z.string().email().safeParse(email).success) return { error: "That email doesn't look right." };
   if (!isRole(role)) return { error: "That is not a valid role." };
@@ -138,7 +138,7 @@ export async function inviteUserAction(
     return { error: "Invite healers from the Healers screen, so the account is linked to their profile." };
   }
 
-  const invited = await inviteUser(email, `${origin}/auth/callback?next=/admin/dashboard`);
+  const invited = await inviteUser(email, await absoluteUrl("/auth/callback?next=/admin/dashboard"));
   if (!invited.ok) {
     return {
       error:

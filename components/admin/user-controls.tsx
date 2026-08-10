@@ -174,12 +174,11 @@ export function StatusControls({
   );
 }
 
-export function InviteUserForm({ origin }: { origin: string }) {
+export function InviteUserForm() {
   const [state, formAction] = useActionState<UserActionState, FormData>(inviteUserAction, {});
 
   return (
     <form action={formAction} className="grid gap-3 px-6 py-5 sm:grid-cols-[1fr_180px_auto] sm:items-end">
-      <input type="hidden" name="origin" value={origin} />
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">Email</span>

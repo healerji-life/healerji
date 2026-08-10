@@ -44,7 +44,7 @@ export default async function HealerPortalLayout({ children }: { children: React
         </div>
       </header>
 
-      <main className="px-5 py-7 sm:px-8">
+      <main id="main" className="px-5 py-7 sm:px-8">
         <div className="mx-auto max-w-3xl">{children}</div>
       </main>
     </div>

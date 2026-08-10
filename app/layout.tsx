@@ -1,10 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Anek_Devanagari, Inter, Inter_Tight, Tiro_Devanagari_Hindi } from "next/font/google";
-import { Header } from "@/components/site/header";
-import { ScrollProgress } from "@/components/scroll-progress";
-import { Footer } from "@/components/site/footer";
-import { BottomNav } from "@/components/site/bottom-nav";
 import "@/styles/globals.css";
 import { AnalyticsTracker } from "@/components/analytics/tracker";
 
@@ -114,11 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <AnalyticsTracker />
         </Suspense>
-        <ScrollProgress />
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
-        <BottomNav />
+        {children}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}

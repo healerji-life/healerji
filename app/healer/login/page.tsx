@@ -23,7 +23,7 @@ export default async function HealerLoginPage({
   const proto = headerList.get("x-forwarded-proto") ?? "https";
 
   return (
-    <main className="flex min-h-svh items-center bg-surface-0 px-6 dark:bg-night-950">
+    <main id="main" className="flex min-h-svh items-center bg-surface-0 px-6 dark:bg-night-950">
       <PortalLogin
         action={signIn}
         title="Healer portal"

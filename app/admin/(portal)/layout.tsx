@@ -83,7 +83,7 @@ export default async function AdminPortalLayout({ children }: { children: React.
             </div>
           </div>
 
-          <main className="px-5 py-8 md:px-8 lg:px-10 lg:py-10">
+          <main id="main" className="px-5 py-8 md:px-8 lg:px-10 lg:py-10">
             <div className="mx-auto max-w-[1180px]">{children}</div>
           </main>
         </div>

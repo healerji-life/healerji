@@ -23,9 +23,17 @@ export type { DayPart, Slot, DayAvailability, Duration } from "@/lib/booking/win
 export { toDateKey, bookingWindow, DURATIONS, PART_LABEL } from "@/lib/booking/window";
 
 /**
- * Only genuinely open slots are returned by the database — it does not report
- * which times are taken, because that would leak a healer's calendar to
- * anyone who asked. The UI renders open slots and an accurate count.
+ * Reads get_day_slots, which returns every published slot for the date with a
+ * status, so the calendar can show a taken time as unavailable instead of
+ * silently omitting it — an omitted slot leaves a customer unable to tell
+ * "fully booked" from "not working that day".
+ *
+ * booked, blocked and past are deliberately collapsed into a single `blocked`
+ * flag before this leaves the server. Which slots are taken is a healer's
+ * private calendar and their booking volume; the customer only needs to know
+ * the time cannot be chosen. get_available_slots remains the bookable set, and
+ * bookings_no_overlap in the database is what actually prevents a double
+ * booking — nothing here is a security boundary.
  */
 export async function getAvailability(
   healerSlug: string,
@@ -35,7 +43,7 @@ export async function getAvailability(
   const supabase = await createClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
-  const { data, error } = await supabase.rpc("get_available_slots", {
+  const { data, error } = await supabase.rpc("get_day_slots", {
     p_healer_slug: healerSlug,
     p_date: dateKey,
     p_duration_minutes: duration,
@@ -51,14 +59,18 @@ export async function getAvailability(
       label: start.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }),
       part: partForHour(start.getHours()),
       minutes: duration,
-      blocked: false,
+      blocked: row.status !== "available",
     };
   });
+
+  const openCount = slots.filter((s) => !s.blocked).length;
 
   return ok({
     date: dateKey,
     slots,
-    openCount: slots.length,
+    openCount,
+    // No rows at all means the healer does not work that date. Rows with none
+    // open means they do, and the day is full — two different messages.
     unconfigured: slots.length === 0,
   });
 }

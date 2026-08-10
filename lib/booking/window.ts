@@ -19,6 +19,13 @@ export interface Slot {
   label: string;
   part: DayPart;
   minutes: number;
+  /**
+   * True when the time is published but cannot be chosen — already booked,
+   * blocked by the healer, or inside the notice window. Deliberately one flag
+   * rather than the underlying status: which of those it is belongs to the
+   * healer's calendar, not to whoever opens the booking page.
+   */
+  blocked: boolean;
 }
 
 export interface DayAvailability {

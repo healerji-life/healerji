@@ -63,8 +63,10 @@ const TYPE_META: Record<SessionType, { icon: typeof Video; label: string }> = {
  *   healers      arrive as a prop from a server component reading Supabase,
  *                so the list and the prices are whatever admin last saved.
  *   slots        come from /api/booking/slots, which reads the healer's real
- *                availability. Only open times are returned, so there is
- *                nothing struck-through to render any more.
+ *                availability. Every published time for the day comes back;
+ *                the ones that cannot be chosen render struck through and
+ *                disabled, so a customer can see the shape of the day rather
+ *                than guessing why a time is missing.
  *   the hold     happens before Razorpay opens. /api/checkout reserves the slot
  *                in the same statement that writes the booking, so the time is
  *                genuinely ours before anyone is asked for money.
@@ -609,7 +611,7 @@ export function BookingFlow({
                       healer's private calendar. So "no slots" needs two
                       different explanations, not one. */}
                   {dateKey && !loadingSlots && !slotsError && availability && (
-                    availability.slots.length === 0 ? (
+                    availability.openCount === 0 ? (
                       <div className="rounded-md bg-ink-900/[0.03] p-8 dark:bg-surface-0/[0.04]">
                         <p className="font-display text-lg">
                           {availability.unconfigured
@@ -635,7 +637,7 @@ export function BookingFlow({
                               <p className="text-[0.8125rem] font-medium uppercase tracking-[0.14em] text-mist-500">
                                 {PART_LABEL[part]}
                                 <span className="ml-2 normal-case tracking-normal text-mist-500/80">
-                                  {list.length} open
+                                  {list.filter((s) => !s.blocked).length} open
                                 </span>
                               </p>
                               <div className="mt-3 flex flex-wrap gap-2">
@@ -643,9 +645,15 @@ export function BookingFlow({
                                   <button
                                     key={s.id}
                                     type="button"
-                                    aria-pressed={slot?.id === s.id}
-                                    aria-label={`${s.label}, ${duration} minutes`}
+                                    disabled={s.blocked}
+                                    aria-pressed={!s.blocked && slot?.id === s.id}
+                                    aria-label={
+                                      s.blocked
+                                        ? `${s.label}, unavailable`
+                                        : `${s.label}, ${duration} minutes`
+                                    }
                                     onClick={() => {
+                                      if (s.blocked) return;
                                       setSlot(s);
                                       trackEvent(ANALYTICS_EVENTS.booking_slot_selected, {
                                         healer: healer.slug,
@@ -654,9 +662,13 @@ export function BookingFlow({
                                     }}
                                     className={cn(
                                       "h-11 rounded-full px-5 text-[0.9375rem] tabular-nums transition-colors",
-                                      slot?.id !== s.id &&
+                                      // Shown rather than hidden, so the shape of the
+                                      // day is legible, but plainly not choosable.
+                                      s.blocked &&
+                                        "cursor-not-allowed text-mist-500 line-through opacity-60 hairline",
+                                      !s.blocked && slot?.id !== s.id &&
                                         "hairline hover:bg-ink-900/[0.035] dark:hover:bg-surface-0/[0.06]",
-                                      slot?.id === s.id &&
+                                      !s.blocked && slot?.id === s.id &&
                                         "bg-plum-900 text-surface-0 dark:bg-surface-0 dark:text-ink-900"
                                     )}
                                   >

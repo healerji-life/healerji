@@ -547,6 +547,10 @@ export interface Database {
       published_practices: { Row: PracticeRow; Relationships: [] };
     };
     Functions: {
+      get_day_slots: {
+        Args: { p_healer_slug: string; p_date: string; p_duration_minutes?: number };
+        Returns: { starts_at: string; ends_at: string; status: string }[];
+      };
       get_available_slots: {
         Args: { p_healer_slug: string; p_date: string; p_duration_minutes?: number };
         Returns: { starts_at: string; ends_at: string }[];

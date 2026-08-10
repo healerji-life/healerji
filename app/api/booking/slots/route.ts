@@ -9,9 +9,11 @@ import { isDuration } from "@/lib/booking/window";
  * The calendar is a client component, so it cannot call the service directly
  * (that would pull `next/headers` into the browser bundle). This is the seam.
  *
- * It returns only genuinely open times. It deliberately does not report which
- * slots are taken or why — that would expose a healer's private calendar,
- * their holidays and their booking volume to anyone who could type a URL.
+ * It returns every published time for the day, each flagged open or not, so
+ * the calendar can show a taken slot as unavailable rather than omitting it.
+ * It still does not report *why* a slot is unavailable: booked, blocked and
+ * past are collapsed in the service before they reach here, because the
+ * distinction is a healer's private calendar and their booking volume.
  */
 const querySchema = z.object({
   healer: z.string().min(1).max(80),

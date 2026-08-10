@@ -138,7 +138,12 @@ export async function inviteUserAction(
     return { error: "Invite healers from the Healers screen, so the account is linked to their profile." };
   }
 
-  const invited = await inviteUser(email, await absoluteUrl("/auth/callback?next=/admin/dashboard"));
+  // As with healers: the invited account has no password until they set one.
+  const afterInvite = `/account/password?next=${encodeURIComponent("/admin/dashboard")}`;
+  const invited = await inviteUser(
+    email,
+    await absoluteUrl(`/auth/callback?next=${encodeURIComponent(afterInvite)}`)
+  );
   if (!invited.ok) {
     return {
       error:

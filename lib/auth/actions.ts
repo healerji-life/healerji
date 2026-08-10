@@ -124,8 +124,18 @@ export async function updatePassword(
   if (password.length < 8) return { error: "Passwords need at least 8 characters." };
   if (password !== confirm) return { error: "Those passwords don't match." };
 
+  // updateUser acts on the session the callback established, so this only ever
+  // changes the password of whoever holds the link — there is no user id here
+  // for a caller to tamper with.
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: "We couldn't change your password. The link may have expired." };
+
+  // An invited admin or healer arrives here with a session but no password.
+  // Once they have one, send them on to the portal they were invited to
+  // rather than leaving them on a form with nothing left to do.
+  const next = String(formData.get("next") ?? "");
+  revalidatePath("/", "layout");
+  if (isSafeRedirect(next)) redirect(next);
 
   return { notice: "Your password has been changed." };
 }

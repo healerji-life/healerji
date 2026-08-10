@@ -353,10 +353,13 @@ export async function inviteHealerAction(
   const parsedEmail = z.string().email().safeParse(email);
   if (!parsedEmail.success) return { error: "That email doesn't look right." };
 
+  // Supabase creates the invited account without a password, so the link lands
+  // on the password screen first; that screen forwards to the portal.
+  const afterInvite = `/account/password?next=${encodeURIComponent("/healer/dashboard")}`;
   const result = await inviteHealer(
     id,
     parsedEmail.data,
-    await absoluteUrl("/auth/callback?next=/healer/dashboard")
+    await absoluteUrl(`/auth/callback?next=${encodeURIComponent(afterInvite)}`)
   );
   if (!result.ok) {
     return {

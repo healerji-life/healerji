@@ -174,6 +174,12 @@ export async function archiveTeamMemberAction(formData: FormData): Promise<void>
   const before = await getTeamMember(id);
   if (!before.ok) redirect("/admin/team?error=not_found");
 
+  // Idempotent, same rule as archiving a healer: re-archiving an archived
+  // member changes nothing, so it must not write another audit entry.
+  if (before.data.status === "archived") {
+    redirect("/admin/team?archived=1");
+  }
+
   const supabase = await createClient();
   if (!supabase) redirect("/admin/team?error=unconfigured");
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { listTeamForAdmin } from "@/lib/services/team";
 import { archiveTeamMemberAction } from "@/lib/actions/team";
+import { ConfirmSubmit } from "@/components/admin/confirm-submit";
 import {
   PageHeader, Panel, Table, Th, Td, Badge, EmptyState, ErrorState,
 } from "@/components/admin/ui";
@@ -82,9 +83,12 @@ export default async function AdminTeamPage({
                     {m.status !== "archived" ? (
                       <form action={archiveTeamMemberAction} className="inline">
                         <input type="hidden" name="id" value={m.id} />
-                        <button type="submit" className="text-sm text-error-700 underline-offset-4 hover:underline">
-                          Archive
-                        </button>
+                        <ConfirmSubmit
+                          label="Archive"
+                          pendingLabel="Archiving…"
+                          confirm={`Archive ${m.name}? They will stop appearing on the About page.`}
+                          destructive
+                        />
                       </form>
                     ) : null}
                   </Td>

@@ -221,6 +221,45 @@ export async function inviteHealer(
   return ok({ invited: true });
 }
 
+/**
+ * Closes out a pending invitation once the invited person has authenticated.
+ *
+ * Nothing ever wrote accepted_at, so an invitation that had been accepted and
+ * fully provisioned still read as pending and then, fourteen days later, as
+ * expired. Invitation state could not be reported on, and "resend" or "revoke"
+ * logic built on it would have been wrong.
+ *
+ * Called from the auth callback, the single return point for invitation,
+ * confirmation and OAuth links.
+ *
+ * Race-safe and idempotent by construction: the `is null` predicate means a
+ * second use of the same link matches zero rows rather than overwriting the
+ * original acceptance time, and two concurrent uses cannot both set it. The
+ * partial unique index on (healer_id, email) where accepted_at is null and
+ * revoked_at is null then frees that pair, so the healer can be re-invited
+ * later if they need a fresh link.
+ *
+ * Never throws: a failure here must not stop someone signing in.
+ */
+export async function markInvitationAccepted(email: string): Promise<void> {
+  if (!email) return;
+  try {
+    const admin = createAdminClient();
+    if (!admin) return;
+
+    const { error } = await admin
+      .from("healer_invitations")
+      .update({ accepted_at: new Date().toISOString() })
+      .eq("email", email)
+      .is("accepted_at", null)
+      .is("revoked_at", null);
+
+    if (error) console.error("[invitation] could not mark accepted", error.message);
+  } catch (error) {
+    console.error("[invitation] markInvitationAccepted threw", error);
+  }
+}
+
 
 /**
  * The public listing, in the shape the existing components expect, with real

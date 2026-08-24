@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { safeRedirectOr } from "@/lib/auth/redirects";
+import { markInvitationAccepted } from "@/lib/services/healers";
 
 /**
  * The single return point for email confirmation, password reset and OAuth.
@@ -24,10 +25,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/signin?reason=unconfigured`);
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: exchanged, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(`${origin}/signin?reason=link_expired`);
   }
+
+  // An invitation link that has just been used is an invitation that has been
+  // accepted. Idempotent, and never allowed to block the redirect.
+  const email = exchanged?.user?.email;
+  if (email) await markInvitationAccepted(email);
 
   return NextResponse.redirect(`${origin}${next}`);
 }

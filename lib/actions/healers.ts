@@ -305,6 +305,16 @@ export async function archiveHealerAction(formData: FormData): Promise<void> {
 
   const id = String(formData.get("id") ?? "");
   const before = await getHealerById(id);
+
+  // Idempotent: a second click, a double submit or a replayed POST must not
+  // write a second identical audit entry. The production audit log carried 20
+  // "Archived Poonam Khetan" rows written in 48 seconds. State that has not
+  // changed is not an event.
+  if (before.ok && before.data.status === "archived") {
+    revalidatePublic(before.data.slug, id);
+    redirect("/admin/healers?archived=1");
+  }
+
   const result = await archiveHealer(id);
   if (!result.ok) redirect(`/admin/healers/${id}?error=archive_failed`);
 
@@ -327,6 +337,14 @@ export async function restoreHealerAction(formData: FormData): Promise<void> {
   if (!auth.ok) redirect("/admin/healers?error=forbidden");
 
   const id = String(formData.get("id") ?? "");
+  const before = await getHealerById(id);
+
+  // Same rule as archive: restoring an already-restored healer is a no-op.
+  if (before.ok && before.data.status !== "archived") {
+    revalidatePublic(before.data.slug, id);
+    redirect(`/admin/healers/${id}?restored=1`);
+  }
+
   const result = await restoreHealer(id);
   if (!result.ok) redirect(`/admin/healers/${id}?error=restore_failed`);
 

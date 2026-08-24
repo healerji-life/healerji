@@ -3,6 +3,7 @@ import { PortalLogin } from "@/components/auth/portal-login";
 import { signIn } from "@/lib/auth/actions";
 import { getViewer } from "@/lib/auth/session";
 import { isStaff } from "@/lib/auth/roles";
+import { isSafeRedirect } from "@/lib/auth/redirects";
 
 export const metadata = { title: "Sign in · HealerJi Operations" };
 
@@ -26,7 +27,7 @@ export default async function AdminLoginPage({
         action={signIn}
         title="Admin portal"
         subtitle="Sign in to manage healers, bookings, content and analytics."
-        next={params.next?.startsWith("/admin") ? params.next : "/admin/dashboard"}
+        next={isSafeRedirect(params.next ?? "") && params.next!.startsWith("/admin") ? params.next! : "/admin/dashboard"}
         {...(params.reason ? { reason: params.reason } : {})}
       />
     </main>

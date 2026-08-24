@@ -6,8 +6,12 @@ import { pathways } from "@/lib/data/pathways";
 import { listPublishedArticleSlugs } from "@/lib/services/articles";
 import { listPublishedPracticeSlugs } from "@/lib/services/practices";
 import { legalDocs } from "@/lib/data/legal";
+import { SITE_URL } from "@/lib/config/site";
 
-const BASE = "https://healerji.com";
+// Resolved from NEXT_PUBLIC_SITE_URL / the Vercel domain, never hardcoded:
+// a sitemap advertising a host that does not serve these routes is worse than
+// no sitemap at all.
+const BASE = SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [healerSlugs, articleSlugs, practiceSlugs] = await Promise.all([

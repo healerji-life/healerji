@@ -24,6 +24,13 @@ const FOLDER_PERMISSION: Record<UploadFolder, Permission> = {
 };
 
 export async function POST(request: Request) {
+  // Authenticate before parsing the body, so an anonymous caller cannot probe
+  // which upload folders exist.
+  const session = await authorise();
+  if (!session.ok) {
+    return NextResponse.json({ error: session.error }, { status: session.status });
+  }
+
   const body = (await request.json().catch(() => null)) as { folder?: string } | null;
   const requested = body?.folder ?? "";
   const allowed = Object.values(UPLOAD_FOLDERS) as string[];
@@ -32,6 +39,7 @@ export async function POST(request: Request) {
   }
   const folder = requested as UploadFolder;
 
+  // Then the permission that governs the content this image belongs to.
   const auth = await authorise(FOLDER_PERMISSION[folder]);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

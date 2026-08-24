@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectOr } from "@/lib/auth/redirects";
 
 /**
  * The single return point for email confirmation, password reset and OAuth.
@@ -11,8 +12,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
-  const rawNext = searchParams.get("next") ?? "/";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  // Same guard as every other redirect in the auth system.
+  const next = safeRedirectOr(searchParams.get("next"), "/");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/signin?reason=missing_code`);

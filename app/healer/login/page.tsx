@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { PortalLogin } from "@/components/auth/portal-login";
 import { signIn } from "@/lib/auth/actions";
 import { getViewer } from "@/lib/auth/session";
+import { isSafeRedirect } from "@/lib/auth/redirects";
 
 export const metadata = { title: "Sign in · HealerJi for healers" };
 
@@ -24,7 +25,7 @@ export default async function HealerLoginPage({
         action={signIn}
         title="Healer portal"
         subtitle="Set your availability and see the sessions you're holding."
-        next={params.next?.startsWith("/healer") ? params.next : "/healer/dashboard"}
+        next={isSafeRedirect(params.next ?? "") && params.next!.startsWith("/healer") ? params.next! : "/healer/dashboard"}
         {...(params.reason ? { reason: params.reason } : {})}
       />
     </main>

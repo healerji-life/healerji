@@ -15,7 +15,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const DIR = "supabase/migrations";
+// Overridable so the rule can be exercised against fixtures in scripts/tests.
+const DIR = process.env.MIGRATIONS_DIR || "supabase/migrations";
 const files = readdirSync(DIR).filter((f) => f.endsWith(".sql")).sort();
 
 const problems = [];
@@ -229,14 +230,29 @@ if (rlsFile) {
   problems.push("no RLS migration found");
 }
 
-// Tables created AFTER the RLS migration would miss the blanket enable.
+// Tables created AFTER the RLS migration would miss the blanket enable —
+// unless the same migration turns RLS on for that table itself, which is the
+// normal and correct way to add a table later. Flagging those too produced a
+// permanently failing gate for a table that was in fact fully protected, which
+// is how real findings get ignored.
 const rlsIndex = files.indexOf(rlsFile);
 if (rlsIndex >= 0) {
   for (let i = rlsIndex + 1; i < files.length; i++) {
     const later = stripLiterals(readFileSync(join(DIR, files[i]), "utf8"));
+
+    // Every table this migration enables RLS on, bare or schema-qualified.
+    const enabled = new Set();
+    for (const e of later.matchAll(
+      /alter\s+table\s+(?:if\s+exists\s+)?([\w.]+)\s+enable\s+row\s+level\s+security/gi
+    )) {
+      enabled.add(norm(e[1]));
+    }
+
     for (const m of later.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?([\w.]+)/gi)) {
+      const table = norm(m[1]);
+      if (enabled.has(table)) continue;
       problems.push(
-        `${files[i]}: creates table "${norm(m[1])}" AFTER the RLS migration — it will have no RLS. Move it earlier or enable RLS explicitly.`
+        `${files[i]}: creates table "${table}" AFTER the RLS migration and never enables RLS on it. Move it earlier, or add "alter table ${table} enable row level security" plus policies in this migration.`
       );
     }
   }

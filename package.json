@@ -13,9 +13,10 @@
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local --schema public > lib/supabase/types.ts",
     "check": "node scripts/check.mjs",
-    "verify": "node scripts/check.mjs && node scripts/check-migrations.mjs && node scripts/audit-routes.mjs && npm run typecheck && npm run build",
+    "verify": "node scripts/check.mjs && node scripts/check-migrations.mjs && node scripts/audit-routes.mjs && npm test && npm run typecheck && npm run build",
     "check:migrations": "node scripts/check-migrations.mjs",
-    "audit": "node scripts/audit-routes.mjs"
+    "audit": "node scripts/audit-routes.mjs",
+    "test": "node --test \"scripts/tests/*.test.mts\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

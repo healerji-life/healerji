@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { absoluteUrl } from "@/lib/site-url";
+import { isSafeRedirect } from "@/lib/auth/redirects";
 
 /**
  * Authentication server actions.
@@ -169,10 +170,3 @@ export async function signInWithGoogle(formData: FormData): Promise<void> {
   redirect(data.url);
 }
 
-/**
- * Open-redirect guard. `next` arrives in a query string, so it is attacker
- * controlled; only same-site absolute paths are ever followed.
- */
-function isSafeRedirect(value: string): boolean {
-  return value.startsWith("/") && !value.startsWith("//") && !value.includes("\\");
-}

@@ -22,7 +22,11 @@ export async function listActiveTeam(): Promise<Result<TeamMemberRow[]>> {
     .select("*")
     .eq("status", "active")
     .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    // Final tiebreak: display_order is not unique and two rows created in the
+    // same transaction share a created_at, so without this the public order
+    // could still differ between requests.
+    .order("id", { ascending: true });
 
   if (error) return fromPostgrestError(error, "We couldn't load the team.");
   return ok(data ?? []);
@@ -37,7 +41,11 @@ export async function listTeamForAdmin(): Promise<Result<TeamMemberRow[]>> {
     .from("team_members")
     .select("*")
     .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    // Final tiebreak: display_order is not unique and two rows created in the
+    // same transaction share a created_at, so without this the public order
+    // could still differ between requests.
+    .order("id", { ascending: true });
 
   if (error) return fromPostgrestError(error, "We couldn't load the team.");
   return ok(data ?? []);

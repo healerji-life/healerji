@@ -26,6 +26,14 @@ const DATASETS: ExportDataset[] = ["healers", "bookings", "payments", "customers
 const FORMATS: ExportFormat[] = ["csv", "xlsx", "pdf"];
 
 export async function GET(request: Request) {
+  // Authenticate before looking at the query string at all. Validating first
+  // told an anonymous caller which dataset names exist (400 for an unknown
+  // one, 401 for a real one) — a small enumeration oracle with no upside.
+  const session = await authorise();
+  if (!session.ok) {
+    return NextResponse.json({ error: session.error }, { status: session.status });
+  }
+
   const url = new URL(request.url);
   const dataset = url.searchParams.get("dataset") ?? "";
   const format = url.searchParams.get("format") ?? "csv";
@@ -38,6 +46,8 @@ export async function GET(request: Request) {
   }
 
   const typed = dataset as ExportDataset;
+  // Re-check with the permission this specific dataset requires, so an editor
+  // asking for `customers` is still refused.
   const auth = await authorise(EXPORT_PERMISSION[typed]);
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

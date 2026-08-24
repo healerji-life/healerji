@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Anek_Devanagari, Inter, Inter_Tight, Tiro_Devanagari_Hindi } from "next/font/google";
 import "@/styles/globals.css";
 import { AnalyticsTracker } from "@/components/analytics/tracker";
+import { SITE_URL } from "@/lib/config/site";
 
 /**
  * One family, two optical cuts. Inter Tight carries display sizes with
@@ -33,7 +34,11 @@ const anek = Anek_Devanagari({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://healerji.com"),
+  metadataBase: new URL(SITE_URL),
+  // Relative canonical: Next resolves it against metadataBase and the current
+  // route, so every page declares itself canonical rather than every page
+  // claiming the homepage.
+  alternates: { canonical: "./" },
   title: {
     default: "HealerJi — Certified healers for health, relationships, career, money & emotional wellbeing",
     template: "%s · HealerJi",
@@ -44,7 +49,9 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "HealerJi",
     locale: "en_IN",
-    url: "https://healerji.com",
+    // Relative, like the canonical above: resolved per route rather than
+    // pinning every share card to the homepage.
+    url: "./",
     title: "HealerJi — You don't have to carry it alone",
     description:
       "Certified healers over chat, audio or video — for health, relationships, career, money, and emotions.",
@@ -65,8 +72,8 @@ const orgJsonLd = {
   "@type": "Organization",
   name: "HealerJi",
   legalName: "Sattveda Wellness Technology Private Limited",
-  url: "https://healerji.com",
-  logo: "https://healerji.com/brand/lockup.svg",
+  url: SITE_URL,
+  logo: `${SITE_URL}/brand/lockup.svg`,
   address: {
     "@type": "PostalAddress",
     streetAddress: "M-5, Essel House, 10 Asaf Ali Road",

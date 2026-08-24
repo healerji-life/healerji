@@ -1,9 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { deriveVisitorId, ingestEvent, ingestPageView } from "@/lib/services/analytics";
-import { ALL_EVENT_NAMES, type AnalyticsEventName } from "@/lib/analytics/events";
+import {
+  ALL_EVENT_NAMES,
+  isServerAuthoritativeEvent,
+  type AnalyticsEventName,
+} from "@/lib/analytics/events";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  consumeRateLimit,
+  clientIpFrom,
+  RATE_LIMITS,
+} from "@/lib/services/rate-limit";
 
 /**
  * Analytics ingestion.
@@ -95,17 +104,20 @@ function referrerHost(referrer?: string): string | null {
   }
 }
 
-function clientIp(request: NextRequest): string {
-  // Vercel sets x-forwarded-for; take the left-most (original client) entry.
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() ?? "unknown";
-  return request.headers.get("x-real-ip") ?? "unknown";
-}
-
 export async function POST(request: NextRequest) {
   // Not configured is not an error the visitor should ever see or retry.
   if (!createAdminClient()) {
     return NextResponse.json({ ok: false, reason: "not_configured" }, { status: 202 });
+  }
+
+  // Per-IP cap. Fails open: a limiter outage must not stop the site
+  // reporting, and analytics is never worth a 5xx to a visitor.
+  const ip = clientIpFrom(request.headers);
+  const limit = await consumeRateLimit(RATE_LIMITS.analytics, ip);
+  if (!limit.allowed) {
+    // 202, not 429: the beacon is fire-and-forget and a visitor must never see
+    // an error because of it. The event is simply dropped.
+    return NextResponse.json({ ok: false, reason: "rate_limited" }, { status: 202 });
   }
 
   let body: unknown;
@@ -124,11 +136,21 @@ export async function POST(request: NextRequest) {
     // used as arbitrary storage.
     return NextResponse.json({ ok: false, reason: "unknown_event" }, { status: 400 });
   }
+
+  // A registry-valid name is not evidence the thing happened. Conversion
+  // events are emitted server-side from the verified payment path; accepting
+  // them here let anyone set the revenue funnel to any number.
+  if (isServerAuthoritativeEvent(p.name)) {
+    return NextResponse.json(
+      { ok: false, reason: "server_authoritative_event" },
+      { status: 400 }
+    );
+  }
   const name = p.name as AnalyticsEventName;
 
   const ua = request.headers.get("user-agent") ?? "";
   const isBot = looksLikeBot(ua);
-  const visitorId = await deriveVisitorId(clientIp(request), ua);
+  const visitorId = await deriveVisitorId(ip, ua);
   const device = deviceType(ua, p.screenWidth);
   const country = request.headers.get("x-vercel-ip-country");
 

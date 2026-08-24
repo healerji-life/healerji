@@ -3,6 +3,7 @@ import { z } from "zod";
 import { confirmPaymentFromHandler } from "@/lib/services/payments";
 import { getBookingByReference } from "@/lib/services/bookings";
 import { notifyBookingConfirmed } from "@/lib/services/notifications";
+import { recordBookingConversion } from "@/lib/services/analytics";
 
 /**
  * Confirms a payment after Razorpay's browser handler fires.
@@ -75,6 +76,9 @@ export async function POST(request: Request) {
    */
   if (booking.data.status === "confirmed" || booking.data.status === "completed") {
     await notifyBookingConfirmed(booking.data.id);
+    // Authoritative conversion events: the browser is no longer trusted to
+    // report payment_success / booking_complete.
+    await recordBookingConversion(booking.data.id);
   }
 
   return NextResponse.json({

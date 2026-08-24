@@ -12,7 +12,7 @@ const schema = z.object({
 });
 
 export function ContactForm({ topics }: { topics: string[] }) {
-  const [fields, setFields] = useState({ name: "", email: "", topic: topics[0] ?? "General", message: "" });
+  const [fields, setFields] = useState({ name: "", email: "", topic: topics[0] ?? "General", message: "", company: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [serverError, setServerError] = useState<string | null>(null);
@@ -53,6 +53,26 @@ export function ContactForm({ topics }: { topics: string[] }) {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
+      {/*
+        Honeypot. Hidden from sight, from screen readers and from tab order, so
+        no real person can fill it in; automated submitters fill every field.
+        A filled value is answered with the same success response as a genuine
+        send, so the bot learns nothing.
+      */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <label>
+          Company
+          <input
+            type="text"
+            name="company"
+            tabIndex={-1}
+            autoComplete="off"
+            value={fields.company}
+            onChange={(e) => setFields((f) => ({ ...f, company: e.target.value }))}
+          />
+        </label>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium">Your name</span>

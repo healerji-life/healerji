@@ -25,7 +25,7 @@ const FIELDS = [
 
 export function HealerApplyForm() {
   const [fields, setFields] = useState<Record<string, string>>({
-    name: "", email: "", phone: "", modalities: "", years: "", languages: "", about: "",
+    name: "", email: "", phone: "", modalities: "", years: "", languages: "", about: "", company: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
@@ -68,6 +68,24 @@ export function HealerApplyForm() {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
+      {/*
+        Honeypot — hidden from sight, screen readers and tab order. See the
+        contact form; a filled value is answered as an ordinary success.
+      */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <label>
+          Company
+          <input
+            type="text"
+            name="company"
+            tabIndex={-1}
+            autoComplete="off"
+            value={fields.company ?? ""}
+            onChange={(e) => setFields((f) => ({ ...f, company: e.target.value }))}
+          />
+        </label>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2">
         {FIELDS.map((f) => (
           <label key={f.key} className="block">

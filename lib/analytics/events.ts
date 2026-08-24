@@ -49,6 +49,28 @@ export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTIC
 
 export const ALL_EVENT_NAMES = Object.values(ANALYTICS_EVENTS) as AnalyticsEventName[];
 
+/**
+ * Events the browser is NOT allowed to report.
+ *
+ * The collector validated the event *name* against this registry and accepted
+ * anything in it, so an anonymous caller could POST `payment_success` as often
+ * as they liked and move the revenue funnel to any number they wanted. A name
+ * being known is not evidence the thing happened.
+ *
+ * These two have an authoritative server-side origin — a verified Razorpay
+ * signature, or the webhook — so they are emitted there and rejected here. Every
+ * other event describes browser behaviour that only the browser can observe,
+ * and stays client-reported.
+ */
+export const SERVER_AUTHORITATIVE_EVENTS: readonly AnalyticsEventName[] = [
+  ANALYTICS_EVENTS.payment_success,
+  ANALYTICS_EVENTS.booking_complete,
+];
+
+export function isServerAuthoritativeEvent(name: string): boolean {
+  return (SERVER_AUTHORITATIVE_EVENTS as readonly string[]).includes(name);
+}
+
 /** Human labels for the admin analytics UI. */
 export const EVENT_LABEL: Record<AnalyticsEventName, string> = {
   session_start: "Session started",

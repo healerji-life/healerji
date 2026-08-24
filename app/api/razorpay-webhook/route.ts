@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/payments";
 import { webhookDedupeId } from "@/lib/services/webhook-signature";
 import { notifyBookingConfirmed } from "@/lib/services/notifications";
+import { recordBookingConversion } from "@/lib/services/analytics";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -87,7 +88,10 @@ export async function POST(request: Request) {
 
   if (applied.ok && (eventType === "payment.captured" || eventType === "order.paid")) {
     const bookingId = await bookingIdForOrder(raw);
-    if (bookingId) await notifyBookingConfirmed(bookingId);
+    if (bookingId) {
+      await notifyBookingConfirmed(bookingId);
+      await recordBookingConversion(bookingId);
+    }
   }
 
   return NextResponse.json({ received: true, applied: applied.ok });

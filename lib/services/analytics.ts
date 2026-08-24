@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { fromPostgrestError, NOT_CONFIGURED, ok, type Result } from "@/lib/services/types";
 import type { PageEngagementRow } from "@/lib/supabase/types";
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 
 /**
  * Analytics.
@@ -168,4 +169,69 @@ export async function deriveVisitorId(ip: string, userAgent: string): Promise<st
     .slice(0, 16)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/**
+ * Records the authoritative conversion events for a confirmed booking.
+ *
+ * These two events used to be reported by the browser and accepted on trust,
+ * which meant anyone could POST `payment_success` repeatedly and move the
+ * funnel. They are now emitted only from here, and only from the two places
+ * that have server-verified evidence the payment happened: /api/booking/verify
+ * (after a checked Razorpay handler signature) and the webhook (after a checked
+ * HMAC).
+ *
+ * The booking row supplies attribution — visitor, session and source page were
+ * captured when the hold was created — so the funnel still joins to the page
+ * that produced the booking rather than losing it.
+ *
+ * Idempotent by the same rule as the receipt email: both call sites run behind
+ * webhook_events' unique index, so a retried delivery does not reach here
+ * twice. Never throws; analytics must not be able to fail a paid booking.
+ */
+export async function recordBookingConversion(bookingId: string): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    if (!admin) return;
+
+    const { data: booking, error } = await admin
+      .from("bookings")
+      .select("id, healer_id, amount_paise, currency, source_path, source_route, analytics_session_id, customer_id")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (error || !booking) {
+      console.error("[analytics] no booking for conversion", bookingId, error?.message);
+      return;
+    }
+
+    // Server-side events have no browser to fingerprint. A stable synthetic
+    // visitor keeps them out of the human visitor counts rather than inventing
+    // a person who never browsed.
+    const shared = {
+      visitorId: "server",
+      sessionId: booking.analytics_session_id ?? null,
+      userId: booking.customer_id ?? null,
+      path: booking.source_path ?? null,
+      route: booking.source_route ?? null,
+      healerId: booking.healer_id,
+      bookingId: booking.id,
+      isBot: false,
+    };
+
+    const properties = {
+      amount_paise: booking.amount_paise,
+      currency: booking.currency,
+      source: "server",
+    };
+
+    for (const name of [ANALYTICS_EVENTS.payment_success, ANALYTICS_EVENTS.booking_complete]) {
+      const result = await ingestEvent({ ...shared, name, properties });
+      if (!result.ok) {
+        console.error("[analytics] conversion event failed", name, bookingId, result.error.message);
+      }
+    }
+  } catch (error) {
+    console.error("[analytics] recordBookingConversion threw", bookingId, error);
+  }
 }

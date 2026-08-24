@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { err, NOT_CONFIGURED, ok, type Result } from "@/lib/services/types";
+import { createClient } from "@/lib/supabase/server";
+import { err, fromPostgrestError, NOT_CONFIGURED, ok, type Result } from "@/lib/services/types";
 
 /**
  * Public form submissions.
@@ -87,4 +88,70 @@ export async function saveHealerApplication(
     return err("unknown", "We couldn't record that application.");
   }
   return ok({ id: data.id });
+}
+
+// --------------------------------------------------------- admin reading ----
+
+export interface ContactMessageRecord {
+  id: string;
+  name: string;
+  email: string;
+  topic: string;
+  message: string;
+  handled_at: string | null;
+  created_at: string;
+}
+
+export interface HealerApplicationRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  modalities: string;
+  years: number | null;
+  languages: string | null;
+  about: string;
+  status: string;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+/**
+ * Both queues for the admin inbox.
+ *
+ * Read with the caller's own client, not the service role: RLS on both tables
+ * already restricts them to staff, so this stays subject to the same rule as
+ * every other admin screen rather than quietly bypassing it.
+ */
+export async function listSubmissionsForAdmin(): Promise<
+  Result<{ applications: HealerApplicationRecord[]; messages: ContactMessageRecord[] }>
+> {
+  const supabase = await createClient();
+  if (!supabase) return NOT_CONFIGURED("Supabase");
+
+  // Independent queries, so they run concurrently rather than in sequence.
+  const [applications, messages] = await Promise.all([
+    supabase
+      .from("healer_applications")
+      .select("id, name, email, phone, modalities, years, languages, about, status, reviewed_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase
+      .from("contact_messages")
+      .select("id, name, email, topic, message, handled_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200),
+  ]);
+
+  if (applications.error) {
+    return fromPostgrestError(applications.error, "We couldn't load healer applications.");
+  }
+  if (messages.error) {
+    return fromPostgrestError(messages.error, "We couldn't load contact messages.");
+  }
+
+  return ok({
+    applications: (applications.data ?? []) as HealerApplicationRecord[],
+    messages: (messages.data ?? []) as ContactMessageRecord[],
+  });
 }

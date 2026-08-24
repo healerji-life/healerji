@@ -17,6 +17,7 @@ export const NAV: NavItem[] = [
   { href: "/admin/bookings", label: "Bookings", permission: "bookings.view.all" },
   { href: "/admin/healers", label: "Healers", permission: "healers.view" },
   { href: "/admin/customers", label: "Customers", permission: "customers.view" },
+  { href: "/admin/inbox", label: "Inbox", permission: "customers.view" },
   { href: "/admin/payments", label: "Payments", permission: "payments.view" },
   {
     href: "/admin/blog",

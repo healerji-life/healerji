@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { err, fromPostgrestError, NOT_CONFIGURED, ok, type Result } from "@/lib/services/types";
 import { isConfigured } from "@/lib/services/integrations";
 import type { PaymentRow } from "@/lib/supabase/types";
+import {
+  isValidPaymentSignature,
+  isValidWebhookSignature,
+} from "@/lib/services/webhook-signature";
 
 /**
  * Payments.
@@ -20,43 +24,28 @@ import type { PaymentRow } from "@/lib/supabase/types";
  * their own payment row — RLS grants no client INSERT on `payments` at all.
  */
 
-/** Razorpay's documented handler scheme: HMAC-SHA256 of "order_id|payment_id". */
+/**
+ * Razorpay's documented handler scheme: HMAC-SHA256 of "order_id|payment_id".
+ * The comparison itself lives in webhook-signature.ts so it can be tested
+ * without this module's server-only imports; this is the single place the
+ * secret is read from the environment.
+ */
 export function verifyPaymentSignature(params: {
   orderId: string;
   paymentId: string;
   signature: string;
 }): boolean {
-  const secret = process.env.RAZORPAY_KEY_SECRET;
-  if (!secret) return false;
-
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(`${params.orderId}|${params.paymentId}`)
-    .digest("hex");
-
-  return timingSafeEqualHex(params.signature, expected);
+  return isValidPaymentSignature(
+    params.orderId,
+    params.paymentId,
+    params.signature,
+    process.env.RAZORPAY_KEY_SECRET
+  );
 }
 
 /** Webhook scheme: HMAC-SHA256 of the raw request body. */
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-  if (!secret) return false;
-  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
-  return timingSafeEqualHex(signature, expected);
-}
-
-/**
- * Constant-time compare. Buffer.from on differing lengths would make
- * timingSafeEqual throw, so length is checked first — that leaks only the
- * length of a hash whose length is fixed and public anyway.
- */
-function timingSafeEqualHex(a: string, b: string): boolean {
-  if (typeof a !== "string" || a.length !== b.length) return false;
-  try {
-    return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
-  } catch {
-    return false;
-  }
+  return isValidWebhookSignature(rawBody, signature, process.env.RAZORPAY_WEBHOOK_SECRET);
 }
 
 export async function recordOrderCreated(params: {
@@ -126,20 +115,33 @@ export async function confirmPaymentFromHandler(params: {
 }
 
 /**
- * Webhook ingestion. Returns `duplicate: true` when the event has been seen
- * before, which the route handler should answer 200 to — Razorpay treats a
- * non-200 as a failure and retries harder.
+ * Records a webhook event whose signature this server has ALREADY verified.
+ *
+ * The signature check is deliberately not done here any more. It used to be —
+ * this function verified the signature and then inserted the row regardless,
+ * so an unauthenticated caller could pick the `x-razorpay-event-id` header and
+ * occupy that key with a forged row. When Razorpay later delivered the genuine
+ * event with that id, the insert hit the unique index, the handler read it as a
+ * duplicate and never applied the payment: a paid booking would stay
+ * unconfirmed with no receipt. Each forged POST also wrote an unbounded row
+ * through the service-role client.
+ *
+ * The caller must reject an invalid signature before calling this. Forged
+ * events are logged rather than stored: keeping them cost a write path that an
+ * anonymous attacker controlled, which is a worse trade than losing the
+ * forensic row. Vercel's request logs still record the attempt.
+ *
+ * Returns `duplicate: true` when the event has been seen before, which the
+ * route should answer 200 — Razorpay treats a non-200 as failure and retries
+ * harder.
  */
-export async function ingestWebhookEvent(params: {
+export async function recordVerifiedWebhookEvent(params: {
   eventId: string;
   eventType: string;
   rawBody: string;
-  signature: string;
-}): Promise<Result<{ duplicate: boolean; signatureValid: boolean }>> {
+}): Promise<Result<{ duplicate: boolean }>> {
   const admin = createAdminClient();
   if (!admin) return NOT_CONFIGURED("Supabase service role");
-
-  const signatureValid = verifyWebhookSignature(params.rawBody, params.signature);
 
   let payload: unknown;
   try {
@@ -148,21 +150,19 @@ export async function ingestWebhookEvent(params: {
     return err("validation", "Malformed webhook body.");
   }
 
-  // An invalid signature is still recorded, unprocessed. Forged attempts are
-  // worth seeing in the audit trail.
   const { error } = await admin.from("webhook_events").insert({
     event_id: params.eventId,
     event_type: params.eventType,
-    signature_valid: signatureValid,
+    signature_valid: true,
     payload: payload as never,
   });
 
   if (error) {
-    if (error.code === "23505") return ok({ duplicate: true, signatureValid });
+    if (error.code === "23505") return ok({ duplicate: true });
     return fromPostgrestError(error, "We couldn't record that webhook.");
   }
 
-  return ok({ duplicate: false, signatureValid });
+  return ok({ duplicate: false });
 }
 
 export async function markWebhookProcessed(
@@ -263,7 +263,7 @@ export async function releaseHold(bookingId: string, reason: string): Promise<Re
 /**
  * Applies a Razorpay webhook event to our own records.
  *
- * Called only after ingestWebhookEvent() has confirmed the signature and that
+ * Called only after the route has verified the signature and
  * the event is not a replay.
  */
 export async function applyWebhookEvent(

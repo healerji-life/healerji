@@ -27,7 +27,10 @@ export interface ArticleFilters extends ListParams {
 export async function listPublishedArticles(
   filters: ArticleFilters = {}
 ): Promise<Result<ArticleRow[]>> {
-  const supabase = await createClient();
+    // Static client: public, published content only. Using the cookie-bound
+  // client here read cookies(), which opted the whole route into dynamic
+  // rendering and silently defeated its `export const revalidate`.
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   let query = supabase
@@ -104,7 +107,10 @@ export async function getArticleById(id: string): Promise<Result<ArticleRow>> {
 }
 
 export async function listArticleCategories(): Promise<Result<{ slug: string; name: string }[]>> {
-  const supabase = await createClient();
+    // Static client: public, published content only. Using the cookie-bound
+  // client here read cookies(), which opted the whole route into dynamic
+  // rendering and silently defeated its `export const revalidate`.
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
   const { data, error } = await supabase
     .from("article_categories").select("slug, name").eq("status", "active").order("display_order");

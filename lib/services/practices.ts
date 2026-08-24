@@ -26,7 +26,10 @@ export interface PracticeFilters extends ListParams {
 export async function listPublishedPractices(
   filters: PracticeFilters = {}
 ): Promise<Result<PracticeRow[]>> {
-  const supabase = await createClient();
+    // Static client: public, published content only. Using the cookie-bound
+  // client here read cookies(), which opted the whole route into dynamic
+  // rendering and silently defeated its `export const revalidate`.
+  const supabase = createStaticClient();
   if (!supabase) return NOT_CONFIGURED("Supabase");
 
   let query = supabase
